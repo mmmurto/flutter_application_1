@@ -1,6 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() => runApp(const DemoQrMenuApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabasePublishableKey =
+      String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+
+  if (supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty) {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabasePublishableKey,
+    );
+  }
+
+  runApp(const DemoQrMenuApp());
+}
 
 class DemoQrMenuApp extends StatelessWidget {
   const DemoQrMenuApp({super.key});
