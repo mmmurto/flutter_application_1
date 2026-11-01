@@ -1,25 +1,46 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'dart:ui' show Size;
-
+import 'package:flutter_application_1/app/app.dart';
+import 'package:flutter_application_1/core/config/app_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_application_1/main.dart';
+const _unconfigured = AppConfig(supabaseUrl: '', supabasePublishableKey: '');
 
 void main() {
-  testWidgets('renders the restaurant menu', (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1440, 1000);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets('customer entry does not expose staff navigation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const RestaurantPlatformApp(config: _unconfigured));
+    expect(find.text('Open a restaurant menu'), findsOneWidget);
+    expect(find.text('Restaurant management'), findsNothing);
+    expect(find.text('Kitchen access'), findsNothing);
+  });
 
-    await tester.pumpWidget(const DemoQrMenuApp());
+  testWidgets('owner route is protected by a staff access boundary', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const RestaurantPlatformApp(
+        config: _unconfigured,
+        initialRoute: '/owner',
+      ),
+    );
+    expect(find.text('Restaurant management'), findsOneWidget);
+    expect(
+      find.text(
+        'A verified staff account and restaurant permission are required.',
+      ),
+      findsOneWidget,
+    );
+  });
 
-    expect(find.text('Demo Restaurant'), findsOneWidget);
+  testWidgets('QR route fails closed when backend is not configured', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const RestaurantPlatformApp(
+        config: _unconfigured,
+        initialRoute: '/r/restaurant/table/token',
+      ),
+    );
+    expect(find.text('Service is not configured'), findsOneWidget);
   });
 }
