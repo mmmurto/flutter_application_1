@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "db:start": "supabase start --network-id local-network",
+    "db:test": "supabase test db --network-id local-network",
+    "db:stop": "supabase stop --network-id local-network"
+  },
+  "devDependencies": {
+    "supabase": "2.122.0"
+  }
+}
