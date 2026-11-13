@@ -20,8 +20,10 @@ authorization boundary:
 
 The pgTAP suite in `supabase/tests/security_foundation_rls_test.sql` defines the
 allow and deny cases for anonymous users, outsiders, restaurant owners, kitchen
-staff, and platform administrators. It must pass against a local Supabase stack
-before the migration is applied to the hosted development project.
+staff, and platform administrators. It passes against a local Supabase stack.
+Both migrations are already applied to the hosted development project, but the
+hosted test runner has not yet executed these assertions there; that open task is
+documented in `docs/HANDOFF_HOSTED_PGTAP.md`.
 
 ## Deliberately deferred
 

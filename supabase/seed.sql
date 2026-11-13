@@ -1,0 +1,11 @@
+-- Intentionally empty.
+--
+-- This project does not seed restaurant, menu, order, or customer records into
+-- a database that the application runs against. Data must come from consenting
+-- restaurants, and fixtures belong only to the pgTAP suite in
+-- supabase/tests/security_foundation_rls_test.sql, which runs inside a
+-- transaction and rolls back.
+--
+-- [db.seed] in supabase/config.toml points at this file so that
+-- `supabase start` and `supabase db reset` have a seed step that does nothing,
+-- instead of warning that the configured seed file is missing.
