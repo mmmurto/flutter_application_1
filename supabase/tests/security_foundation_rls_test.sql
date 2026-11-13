@@ -2,7 +2,45 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-set local search_path = public, extensions;
+select set_config(
+  'search_path',
+  format('public, %I', extension_schema.nspname),
+  true
+)
+from pg_extension as installed_extension
+join pg_namespace as extension_schema
+  on extension_schema.oid = installed_extension.extnamespace
+where installed_extension.extname = 'pgtap';
+
+-- Temporary diagnostic. Prints the session facts needed to explain why the
+-- hosted runner cannot resolve plan(integer). Notices go to stderr, so they do
+-- not affect assertions or the TAP result. Remove once hosted verification is
+-- complete; see docs/HANDOFF_HOSTED_PGTAP.md.
+do $$
+declare
+  pgtap_schema text;
+  pgtap_version text;
+begin
+  select extension_schema.nspname, installed_extension.extversion
+  into pgtap_schema, pgtap_version
+  from pg_extension as installed_extension
+  join pg_namespace as extension_schema
+    on extension_schema.oid = installed_extension.extnamespace
+  where installed_extension.extname = 'pgtap';
+
+  raise notice
+    'DIAG role=% search_path=% pgtap_schema=% pgtap_version=% extensions_usage=% plan_qualified=% plan_unqualified=%',
+    current_user,
+    current_setting('search_path'),
+    coalesce(pgtap_schema, 'NONE'),
+    coalesce(pgtap_version, 'NONE'),
+    case
+      when to_regnamespace('extensions') is null then 'NONE'
+      else has_schema_privilege(current_user, 'extensions', 'USAGE')::text
+    end,
+    coalesce(to_regprocedure('extensions.plan(integer)')::text, 'NONE'),
+    coalesce(to_regprocedure('plan(integer)')::text, 'NONE');
+end $$;
 
 select plan(22);
 
