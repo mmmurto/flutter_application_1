@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/widgets/content_shell.dart';
 import '../data/menu_repository.dart';
+import '../domain/directions.dart';
 import '../domain/restaurant_menu.dart';
 
-/// Public table menu reached from a printed QR code.
+/// Public menu for one restaurant.
 ///
-/// Only restaurant-approved, published data is rendered. The table token is
-/// kept for the future table-session exchange; it is not resolved here because
-/// table QR credentials are deliberately not publicly readable.
+/// Reached either from discovery (`/r/<slug>`, no table context) or from a
+/// printed QR code (`/r/<slug>/table/<token>`). Only restaurant-approved,
+/// published data is rendered. The table token is kept for the future
+/// table-session exchange; it is not resolved here because table QR
+/// credentials are deliberately not publicly readable.
 class RestaurantMenuPage extends StatefulWidget {
   const RestaurantMenuPage({
     required this.restaurantSlug,
@@ -18,7 +22,7 @@ class RestaurantMenuPage extends StatefulWidget {
   });
 
   final String restaurantSlug;
-  final String tableToken;
+  final String? tableToken;
   final MenuRepository? menuRepository;
 
   @override
@@ -121,6 +125,33 @@ class _MenuView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(address, style: const TextStyle(fontSize: 15)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _openDirections(
+                    context,
+                    googleMapsDirectionsUri(
+                      directionsQuery(name: menu.name, address: address),
+                    ),
+                  ),
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Google Maps'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _openDirections(
+                    context,
+                    wazeDirectionsUri(
+                      directionsQuery(name: menu.name, address: address),
+                    ),
+                  ),
+                  icon: const Icon(Icons.navigation_outlined),
+                  label: const Text('Waze'),
                 ),
               ],
             ),
@@ -231,6 +262,16 @@ class _CategorySection extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+Future<void> _openDirections(BuildContext context, Uri uri) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!launched) {
+    messenger?.showSnackBar(
+      const SnackBar(content: Text('Could not open a maps application.')),
     );
   }
 }

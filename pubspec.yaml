@@ -1,5 +1,5 @@
 name: flutter_application_1
-description: "A new Flutter project."
+description: "Restaurant discovery, QR table menus, ordering, and kitchen operations for Azerbaijan."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -35,6 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.18.3
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

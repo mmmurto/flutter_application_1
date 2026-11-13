@@ -18,16 +18,23 @@ development-only previews (see `AGENTS.md`).
 
 - One Flutter project for web, Android, iOS, Windows, macOS, and Linux, split into
   `app/`, `core/`, and `features/` layers with a router rather than widget-embedded navigation.
-- Public routes: `/` (customer entry), `/r/<restaurantSlug>/table/<qrToken>` (table menu entry),
-  `/owner`, `/kitchen`.
+- Public routes: `/` (discovery), `/r/<restaurantSlug>` (public menu),
+  `/r/<restaurantSlug>/table/<qrToken>` (table menu entry), `/owner`, `/kitchen`.
+- Discovery lists approved restaurants with a search box, per-person budget chips in AZN, and a
+  "from" price computed from the cheapest available published dish. Restaurants with no
+  published price are labelled "Menu coming soon" and are excluded by a budget filter.
+- The menu screen offers Google Maps and Waze directions built from the approved address; no
+  API key is required.
+- Deep links open exactly one screen. Flutter's default initial-route handling would otherwise
+  push intermediate routes such as `/r` and `/r/<slug>` first, mounting extra pages.
 - Owner and kitchen routes stop at an access boundary instead of exposing staff tooling, and the
   customer entry exposes no staff navigation. Both are covered by widget tests.
 - The QR route reads the restaurant-approved published menu (categories, items, descriptions,
   AZN prices) through the anon role, so the database decides what is public. It fails closed
   with distinct states for missing configuration, an unpublished or empty menu, a failed read
   with retry, and loading.
-- Parsing of the public menu is covered by model tests against a response captured from the
-  local PostgREST API, plus widget tests for the loaded, empty, and error states.
+- Parsing of the public menu and directory is covered by model tests against responses captured
+  from the local PostgREST API, plus widget tests for loaded, empty, filtered, and error states.
 - Supabase configuration is read at startup from `SUPABASE_URL` and
   `SUPABASE_PUBLISHABLE_KEY`; the app still starts without them, with database features
   unavailable.
@@ -41,7 +48,8 @@ development-only previews (see `AGENTS.md`).
 
 ### Partially built — scaffolding only
 
-- The Supabase client is initialized at startup, but no screen reads or writes real data yet.
+- The Supabase client is initialized at startup and both public screens read real approved
+  data, but nothing writes yet: no sign-in, cart, or order submission.
 - `/owner` and `/kitchen` are placeholders for an authorization boundary, not real sign-in.
 - Both migrations are applied to the hosted development project
   (`restaurant-qr-platform-dev`). Hosted pgTAP verification is still blocked; see
@@ -53,10 +61,10 @@ development-only previews (see `AGENTS.md`).
 ### Not started
 
 Authentication and staff invitations; restaurant onboarding and platform approval; menu
-drafting and publishing; discovery search, AZN budget filter, and maps/waze links; QR
-generation and revocation; cart and server-validated order creation; kitchen queue and order
-status transitions with audit history; payments and provider webhooks; the admin interface;
-AZ/EN/RU localization; Android and iOS release builds; subscriptions and reporting.
+drafting and publishing; QR generation and revocation; cart and server-validated order
+creation; kitchen queue and order status transitions with audit history; payments and provider
+webhooks; the admin interface; AZ/EN/RU localization; Android and iOS release builds;
+subscriptions and reporting.
 
 ## Repository layout
 
@@ -65,13 +73,13 @@ lib/
   main.dart                     environment setup only
   app/                          MaterialApp, router, route table
   core/                         configuration, theme, shared widgets
-  features/                     customer, menu, staff presentation screens
+  features/                     customer, discovery, menu, staff
 supabase/
   config.toml                   local stack configuration (ports, seed, auth)
   migrations/                   versioned schema and security migrations
   seed.sql                      intentionally empty; no production-like seed data
   tests/                        pgTAP security suite (22 assertions)
-test/                           Flutter widget tests
+test/                           Flutter widget and unit tests (17)
 docs/                           product, architecture, security, and handoff docs
 config/dev.example.json         template for local Supabase values
 .github/workflows/              Flutter CI and Database CI
@@ -185,7 +193,7 @@ Run these before opening a pull request. They are the same checks CI runs.
 | --- | --- |
 | `dart format --output=none --set-exit-if-changed lib test` | `Formatted N files (0 changed)` |
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `+8: All tests passed!` |
+| `flutter test` | `+17: All tests passed!` |
 | `npm run db:test` | `Files=1, Tests=22` and `Result: PASS` |
 | `git diff --check` | No output |
 

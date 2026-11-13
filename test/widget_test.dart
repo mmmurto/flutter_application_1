@@ -9,7 +9,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const RestaurantPlatformApp(config: _unconfigured));
-    expect(find.text('Open a restaurant menu'), findsOneWidget);
+    expect(find.text('Find a restaurant'), findsOneWidget);
     expect(find.text('Restaurant management'), findsNothing);
     expect(find.text('Kitchen access'), findsNothing);
   });

@@ -62,6 +62,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.lastSlug, 'approved-test-restaurant');
+    expect(repository.calls, 1, reason: 'a QR deep link mounts one page');
     expect(find.text('Approved Test Restaurant'), findsOneWidget);
     expect(find.text('Starters'), findsOneWidget);
     expect(find.text('Dolma'), findsOneWidget);

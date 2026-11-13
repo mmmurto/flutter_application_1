@@ -3,6 +3,7 @@
 ## Client boundaries
 
 - `/` is the public customer entry.
+- `/r/:restaurantSlug` is the public menu.
 - `/r/:restaurantSlug/table/:qrToken` is the public table-session entry.
 - `/owner` is an authenticated restaurant-management surface.
 - `/kitchen` is an authenticated kitchen surface.
