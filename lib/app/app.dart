@@ -5,6 +5,7 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/discovery/data/restaurant_directory_repository.dart';
 import '../features/menu/data/menu_repository.dart';
+import '../features/owner/data/owner_menu_repository.dart';
 import '../features/staff/data/staff_restaurant_repository.dart';
 import 'app_router.dart';
 
@@ -16,6 +17,7 @@ class RestaurantPlatformApp extends StatelessWidget {
     this.directoryRepository,
     this.authController,
     this.staffRestaurantRepository,
+    this.ownerMenuRepository,
     super.key,
   });
 
@@ -25,6 +27,7 @@ class RestaurantPlatformApp extends StatelessWidget {
   final RestaurantDirectoryRepository? directoryRepository;
   final AuthController? authController;
   final StaffRestaurantRepository? staffRestaurantRepository;
+  final OwnerMenuRepository? ownerMenuRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +37,7 @@ class RestaurantPlatformApp extends StatelessWidget {
       directoryRepository: directoryRepository,
       authController: authController,
       staffRestaurantRepository: staffRestaurantRepository,
+      ownerMenuRepository: ownerMenuRepository,
     );
     return MaterialApp(
       debugShowCheckedModeBanner: false,

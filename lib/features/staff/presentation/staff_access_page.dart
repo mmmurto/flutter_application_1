@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/widgets/content_shell.dart';
 import '../../auth/presentation/auth_controller.dart';
+import '../../../app/routes.dart';
 import '../data/staff_restaurant_repository.dart';
 import '../domain/staff_restaurant.dart';
 
@@ -385,6 +386,10 @@ class _StaffRestaurantCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       child: ListTile(
+        onTap: () =>
+            Navigator.of(context)
+                .pushNamed(AppRoutes.ownerMenu(restaurant.slug)),
+        trailing: const Icon(Icons.chevron_right),
         leading: Icon(Icons.storefront, color: theme.colorScheme.primary),
         title: Text(
           restaurant.name,

@@ -27,6 +27,10 @@ development-only previews (see `AGENTS.md`).
   `app/`, `core/`, and `features/` layers with a router rather than widget-embedded navigation.
 - Public routes: `/` (discovery), `/r/<restaurantSlug>` (public menu),
   `/r/<restaurantSlug>/table/<qrToken>` (table menu entry), `/owner`, `/kitchen`.
+- Signed-in staff open `/owner/menu/<restaurantSlug>` to see their own menu exactly as stored,
+  including draft publication state, inactive categories, and hidden items. Guests and other
+  restaurants cannot read that content; verified against PostgREST with a staff JWT and the
+  anon key.
 - Discovery lists approved restaurants with a search box, per-person budget chips in AZN, and a
   "from" price computed from the cheapest available published dish. Restaurants with no
   published price are labelled "Menu coming soon" and are excluded by a budget filter.
@@ -57,8 +61,9 @@ development-only previews (see `AGENTS.md`).
 
 - The Supabase client is initialized at startup and the public screens plus staff sign-in use
   real data, but nothing writes yet: no cart, order submission, or restaurant tools.
-- `/owner` and `/kitchen` authenticate, but the restaurant tools behind them are not built
-  yet; staff invitations, password reset, and membership screens are pending.
+- `/owner` and `/kitchen` authenticate, and staff can open a read-only workspace for each of
+  their restaurants, but no editing exists yet. Staff invitations, password reset, and role
+  management are pending.
 - Both migrations are applied to the hosted development project
   (`restaurant-qr-platform-dev`). Hosted pgTAP verification is still blocked; see
   [Where to continue](#where-to-continue).
@@ -86,13 +91,14 @@ lib/
     customer/                   discovery entry screen
     discovery/                  public directory repository and filtering
     menu/                       public menu reads, models, directions links
+    owner/                      authenticated restaurant workspace
     staff/                      staff sign-in and guarded surfaces
 supabase/
   config.toml                   local stack configuration (ports, seed, auth)
   migrations/                   versioned schema and security migrations
   seed.sql                      intentionally empty; no production-like seed data
   tests/                        pgTAP security suite (22 assertions)
-test/                           Flutter widget and unit tests (29)
+test/                           Flutter widget and unit tests (35)
 docs/                           product, architecture, security, and handoff docs
 config/dev.example.json         template for local Supabase values
 .github/workflows/              Flutter CI and Database CI
@@ -239,7 +245,7 @@ Run these before opening a pull request. They are the same checks CI runs.
 | --- | --- |
 | `dart format --output=none --set-exit-if-changed lib test` | `Formatted N files (0 changed)` |
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `+29: All tests passed!` |
+| `flutter test` | `+35: All tests passed!` |
 | `npm run db:test` | `Files=1, Tests=22` and `Result: PASS` |
 | `git diff --check` | No output |
 

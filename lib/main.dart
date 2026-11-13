@@ -7,6 +7,7 @@ import 'features/auth/data/auth_repository.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/discovery/data/restaurant_directory_repository.dart';
 import 'features/menu/data/menu_repository.dart';
+import 'features/owner/data/owner_menu_repository.dart';
 import 'features/staff/data/staff_restaurant_repository.dart';
 
 Future<void> main() async {
@@ -17,6 +18,7 @@ Future<void> main() async {
   RestaurantDirectoryRepository? directoryRepository;
   AuthController? authController;
   StaffRestaurantRepository? staffRestaurantRepository;
+  OwnerMenuRepository? ownerMenuRepository;
   if (config.backendConfigured) {
     await Supabase.initialize(
       url: config.supabaseUrl,
@@ -27,6 +29,7 @@ Future<void> main() async {
     directoryRepository = SupabaseRestaurantDirectoryRepository(client);
     authController = AuthController(SupabaseAuthRepository(client));
     staffRestaurantRepository = SupabaseStaffRestaurantRepository(client);
+    ownerMenuRepository = SupabaseOwnerMenuRepository(client);
   }
 
   runApp(
@@ -36,6 +39,7 @@ Future<void> main() async {
       directoryRepository: directoryRepository,
       authController: authController,
       staffRestaurantRepository: staffRestaurantRepository,
+      ownerMenuRepository: ownerMenuRepository,
     ),
   );
 }

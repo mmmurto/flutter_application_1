@@ -6,20 +6,11 @@ import '../features/customer/presentation/customer_entry_page.dart';
 import '../features/discovery/data/restaurant_directory_repository.dart';
 import '../features/menu/data/menu_repository.dart';
 import '../features/menu/presentation/restaurant_menu_page.dart';
+import '../features/owner/data/owner_menu_repository.dart';
+import '../features/owner/presentation/owner_menu_page.dart';
 import '../features/staff/data/staff_restaurant_repository.dart';
 import '../features/staff/presentation/staff_access_page.dart';
-
-abstract final class AppRoutes {
-  static const customer = '/';
-  static const owner = '/owner';
-  static const kitchen = '/kitchen';
-
-  /// Menu without table context: `/r/<restaurantSlug>`.
-  static String restaurantMenu(String slug) => '/r/$slug';
-
-  /// Table menu from a printed QR code: `/r/<restaurantSlug>/table/<qrToken>`.
-  static String tableMenu(String slug, String token) => '/r/$slug/table/$token';
-}
+import 'routes.dart';
 
 class AppRouter {
   const AppRouter({
@@ -28,6 +19,7 @@ class AppRouter {
     this.directoryRepository,
     this.authController,
     this.staffRestaurantRepository,
+    this.ownerMenuRepository,
   });
 
   final AppConfig config;
@@ -35,6 +27,7 @@ class AppRouter {
   final RestaurantDirectoryRepository? directoryRepository;
   final AuthController? authController;
   final StaffRestaurantRepository? staffRestaurantRepository;
+  final OwnerMenuRepository? ownerMenuRepository;
 
   /// One route for the whole deep link.
   ///
@@ -76,6 +69,22 @@ class AppRouter {
     }
 
     final segments = uri.pathSegments;
+
+    // `/owner/menu/<slug>` — authenticated restaurant workspace.
+    if (segments.length == 3 &&
+        segments[0] == 'owner' &&
+        segments[1] == 'menu' &&
+        segments[2].isNotEmpty) {
+      return _page(
+        OwnerMenuPage(
+          restaurantSlug: segments[2],
+          authController: authController,
+          ownerMenuRepository: ownerMenuRepository,
+        ),
+        settings,
+      );
+    }
+
     if (segments.isEmpty) {
       return _page(
         CustomerEntryPage(directoryRepository: directoryRepository),
