@@ -287,6 +287,8 @@ SSH key, and Supabase login.
 - [`docs/HANDOFF_HOSTED_PGTAP.md`](docs/HANDOFF_HOSTED_PGTAP.md) — the open hosted pgTAP
   investigation, evidence so far, and the exact next steps.
 - [`docs/PARTNER_ACCESS.md`](docs/PARTNER_ACCESS.md) — inviting a partner to GitHub and Supabase.
+- [`docs/DEPLOYMENT_AND_PAYMENTS.md`](docs/DEPLOYMENT_AND_PAYMENTS.md) — hosting without buying a
+  server, wallet payments through an Azerbaijani PSP, and the pre-pilot checklist.
 - `AGENTS.md` — engineering rules every contributor and AI assistant must follow.
 
 ## Where to continue
