@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/config/app_config.dart';
 import '../features/customer/presentation/customer_entry_page.dart';
+import '../features/menu/data/menu_repository.dart';
 import '../features/menu/presentation/restaurant_menu_page.dart';
 import '../features/staff/presentation/staff_access_page.dart';
 
@@ -12,8 +13,9 @@ abstract final class AppRoutes {
 }
 
 class AppRouter {
-  const AppRouter({required this.config});
+  const AppRouter({required this.config, this.menuRepository});
   final AppConfig config;
+  final MenuRepository? menuRepository;
 
   Route<void> onGenerateRoute(RouteSettings settings) {
     final uri = Uri.tryParse(settings.name ?? AppRoutes.customer);
@@ -37,7 +39,7 @@ class AppRouter {
         RestaurantMenuPage(
           restaurantSlug: segments[1],
           tableToken: segments[3],
-          backendConfigured: config.backendConfigured,
+          menuRepository: menuRepository,
         ),
         settings,
       );

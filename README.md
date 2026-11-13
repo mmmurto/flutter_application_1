@@ -22,8 +22,12 @@ development-only previews (see `AGENTS.md`).
   `/owner`, `/kitchen`.
 - Owner and kitchen routes stop at an access boundary instead of exposing staff tooling, and the
   customer entry exposes no staff navigation. Both are covered by widget tests.
-- The QR route fails closed when Supabase configuration is missing, and shows a "menu
-  unavailable" state when configuration is present but no published menu resolves.
+- The QR route reads the restaurant-approved published menu (categories, items, descriptions,
+  AZN prices) through the anon role, so the database decides what is public. It fails closed
+  with distinct states for missing configuration, an unpublished or empty menu, a failed read
+  with retry, and loading.
+- Parsing of the public menu is covered by model tests against a response captured from the
+  local PostgREST API, plus widget tests for the loaded, empty, and error states.
 - Supabase configuration is read at startup from `SUPABASE_URL` and
   `SUPABASE_PUBLISHABLE_KEY`; the app still starts without them, with database features
   unavailable.
@@ -42,8 +46,9 @@ development-only previews (see `AGENTS.md`).
 - Both migrations are applied to the hosted development project
   (`restaurant-qr-platform-dev`). Hosted pgTAP verification is still blocked; see
   [Where to continue](#where-to-continue).
-- The table menu route accepts a restaurant slug and table token but has no data layer, so it
-  cannot yet display a real menu.
+- The table menu route accepts a restaurant slug and table token but has no data layer for the
+  table itself: the QR token is not yet exchanged for a table session, and there is no cart or
+  ordering.
 
 ### Not started
 
@@ -180,7 +185,7 @@ Run these before opening a pull request. They are the same checks CI runs.
 | --- | --- |
 | `dart format --output=none --set-exit-if-changed lib test` | `Formatted N files (0 changed)` |
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `+3: All tests passed!` |
+| `flutter test` | `+8: All tests passed!` |
 | `npm run db:test` | `Files=1, Tests=22` and `Result: PASS` |
 | `git diff --check` | No output |
 
