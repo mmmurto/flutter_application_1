@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/config/app_config.dart';
+import '../features/auth/presentation/auth_controller.dart';
 import '../features/customer/presentation/customer_entry_page.dart';
 import '../features/discovery/data/restaurant_directory_repository.dart';
 import '../features/menu/data/menu_repository.dart';
@@ -24,11 +25,13 @@ class AppRouter {
     required this.config,
     this.menuRepository,
     this.directoryRepository,
+    this.authController,
   });
 
   final AppConfig config;
   final MenuRepository? menuRepository;
   final RestaurantDirectoryRepository? directoryRepository;
+  final AuthController? authController;
 
   /// One route for the whole deep link.
   ///
@@ -49,10 +52,19 @@ class AppRouter {
       );
     }
     if (uri.path == AppRoutes.owner) {
-      return _page(const StaffAccessPage(area: StaffArea.owner), settings);
+      return _page(
+        StaffAccessPage(area: StaffArea.owner, authController: authController),
+        settings,
+      );
     }
     if (uri.path == AppRoutes.kitchen) {
-      return _page(const StaffAccessPage(area: StaffArea.kitchen), settings);
+      return _page(
+        StaffAccessPage(
+          area: StaffArea.kitchen,
+          authController: authController,
+        ),
+        settings,
+      );
     }
 
     final segments = uri.pathSegments;

@@ -16,6 +16,10 @@ development-only previews (see `AGENTS.md`).
 
 ### Working and verified
 
+- Staff sign-in for `/owner` and `/kitchen` uses Supabase Auth email and password. Sessions
+  restore on reload, sign-out clears the session, and a rejected sign-in shows the provider
+  message. There is no public sign-up: accounts are created by the platform or restaurant
+  owner. With Supabase unconfigured, both routes stay behind the fail-closed boundary.
 - One Flutter project for web, Android, iOS, Windows, macOS, and Linux, split into
   `app/`, `core/`, and `features/` layers with a router rather than widget-embedded navigation.
 - Public routes: `/` (discovery), `/r/<restaurantSlug>` (public menu),
@@ -48,9 +52,10 @@ development-only previews (see `AGENTS.md`).
 
 ### Partially built — scaffolding only
 
-- The Supabase client is initialized at startup and both public screens read real approved
-  data, but nothing writes yet: no sign-in, cart, or order submission.
-- `/owner` and `/kitchen` are placeholders for an authorization boundary, not real sign-in.
+- The Supabase client is initialized at startup and the public screens plus staff sign-in use
+  real data, but nothing writes yet: no cart, order submission, or restaurant tools.
+- `/owner` and `/kitchen` authenticate, but the restaurant tools behind them are not built
+  yet; staff invitations, password reset, and membership screens are pending.
 - Both migrations are applied to the hosted development project
   (`restaurant-qr-platform-dev`). Hosted pgTAP verification is still blocked; see
   [Where to continue](#where-to-continue).
@@ -60,7 +65,7 @@ development-only previews (see `AGENTS.md`).
 
 ### Not started
 
-Authentication and staff invitations; restaurant onboarding and platform approval; menu
+Staff invitations and password reset; restaurant onboarding and platform approval; menu
 drafting and publishing; QR generation and revocation; cart and server-validated order
 creation; kitchen queue and order status transitions with audit history; payments and provider
 webhooks; the admin interface; AZ/EN/RU localization; Android and iOS release builds;
@@ -73,13 +78,18 @@ lib/
   main.dart                     environment setup only
   app/                          MaterialApp, router, route table
   core/                         configuration, theme, shared widgets
-  features/                     customer, discovery, menu, staff
+  features/
+    auth/                       sign-in repository and session controller
+    customer/                   discovery entry screen
+    discovery/                  public directory repository and filtering
+    menu/                       public menu reads, models, directions links
+    staff/                      staff sign-in and guarded surfaces
 supabase/
   config.toml                   local stack configuration (ports, seed, auth)
   migrations/                   versioned schema and security migrations
   seed.sql                      intentionally empty; no production-like seed data
   tests/                        pgTAP security suite (22 assertions)
-test/                           Flutter widget and unit tests (17)
+test/                           Flutter widget and unit tests (25)
 docs/                           product, architecture, security, and handoff docs
 config/dev.example.json         template for local Supabase values
 .github/workflows/              Flutter CI and Database CI
@@ -185,6 +195,23 @@ Without `--dart-define-from-file`, the app still starts but treats the backend a
 unconfigured, so `/r/<slug>/table/<token>` shows "Service is not configured". That is the
 expected fail-closed behaviour.
 
+### 6. Create a local staff account (to test sign-in)
+
+The app has no public sign-up. Locally, create a confirmed user in Supabase Studio:
+
+1. Open `http://127.0.0.1:54323` (Studio is enabled in `supabase/config.toml`).
+2. Go to **Authentication → Users → Add user**, enter an email and password, and enable
+   **Auto Confirm User**.
+3. Open the `/owner` or `/kitchen` URL printed by `flutter run` and sign in with those
+   credentials.
+
+New accounts start as `customer` profiles and can read nothing staff-only; restaurant access
+requires a membership row, which only a reviewed server-side process will create. Local users
+are wiped by `npm run db reset`.
+
+On a hosted project, decide deliberately whether public email sign-up stays enabled. It only
+creates customer accounts today, but the pilot does not need public registration.
+
 ## Verification
 
 Run these before opening a pull request. They are the same checks CI runs.
@@ -193,7 +220,7 @@ Run these before opening a pull request. They are the same checks CI runs.
 | --- | --- |
 | `dart format --output=none --set-exit-if-changed lib test` | `Formatted N files (0 changed)` |
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `+17: All tests passed!` |
+| `flutter test` | `+25: All tests passed!` |
 | `npm run db:test` | `Files=1, Tests=22` and `Result: PASS` |
 | `git diff --check` | No output |
 
