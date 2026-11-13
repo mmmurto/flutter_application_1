@@ -6,6 +6,8 @@ import 'package:flutter_application_1/core/config/app_config.dart';
 import 'package:flutter_application_1/features/auth/data/auth_repository.dart';
 import 'package:flutter_application_1/features/auth/domain/app_user.dart';
 import 'package:flutter_application_1/features/auth/presentation/auth_controller.dart';
+import 'package:flutter_application_1/features/staff/data/staff_restaurant_repository.dart';
+import 'package:flutter_application_1/features/staff/domain/staff_restaurant.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _configured = AppConfig(
@@ -59,12 +61,16 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> close() => _changes.close();
 }
 
-Widget _app(AuthController? controller, {String route = '/owner'}) =>
-    RestaurantPlatformApp(
-      config: _configured,
-      initialRoute: route,
-      authController: controller,
-    );
+Widget _app(
+  AuthController? controller, {
+  String route = '/owner',
+  StaffRestaurantRepository? restaurants,
+}) => RestaurantPlatformApp(
+  config: _configured,
+  initialRoute: route,
+  authController: controller,
+  staffRestaurantRepository: restaurants,
+);
 
 AuthController _controller(_FakeAuthRepository repository) {
   final controller = AuthController(repository);
@@ -81,6 +87,26 @@ Future<void> _fillCredentials(
   await tester.enterText(find.byType(TextFormField).at(0), email);
   await tester.enterText(find.byType(TextFormField).at(1), password);
 }
+
+class _FakeStaffRestaurants implements StaffRestaurantRepository {
+  _FakeStaffRestaurants(this._handler);
+
+  final Future<List<StaffRestaurant>> Function() _handler;
+  int calls = 0;
+
+  @override
+  Future<List<StaffRestaurant>> fetchMyRestaurants() {
+    calls++;
+    return _handler();
+  }
+}
+
+const _membership = StaffRestaurant(
+  name: 'Cafe Nizami',
+  slug: 'cafe-nizami',
+  role: 'owner',
+  publicationStatus: 'published',
+);
 
 void main() {
   testWidgets('an unconfigured backend keeps the staff boundary closed', (
@@ -206,5 +232,96 @@ void main() {
 
     expect(controller.isSignedIn, isTrue);
     expect(controller.user?.email, 'owner@example.test');
+  });
+  testWidgets('signed-in staff see their restaurants and roles', (
+    tester,
+  ) async {
+    final repository = _FakeAuthRepository(
+      initialUser: const AppUser(id: 'staff-1', email: 'owner@example.test'),
+    );
+    final restaurants = _FakeStaffRestaurants(() async => [_membership]);
+
+    await tester.pumpWidget(
+      _app(_controller(repository), restaurants: restaurants),
+    );
+    await tester.pumpAndSettle();
+
+    expect(restaurants.calls, 1);
+    expect(find.text('Your restaurants'), findsOneWidget);
+    expect(find.text('Cafe Nizami'), findsOneWidget);
+    expect(find.text('Owner · Published'), findsOneWidget);
+  });
+
+  testWidgets('staff without membership access get a clear message', (
+    tester,
+  ) async {
+    final repository = _FakeAuthRepository(
+      initialUser: const AppUser(id: 'staff-2', email: 'new@example.test'),
+    );
+    final restaurants = _FakeStaffRestaurants(() async => const []);
+
+    await tester.pumpWidget(
+      _app(_controller(repository), restaurants: restaurants),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('no active restaurant access yet'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a failed membership read can be retried', (tester) async {
+    final repository = _FakeAuthRepository(
+      initialUser: const AppUser(id: 'staff-1', email: 'owner@example.test'),
+    );
+    var fail = true;
+    final restaurants = _FakeStaffRestaurants(() async {
+      if (fail) throw Exception('offline');
+      return [_membership];
+    });
+
+    await tester.pumpWidget(
+      _app(_controller(repository), restaurants: restaurants),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('could not be loaded'), findsOneWidget);
+
+    fail = false;
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+
+    expect(restaurants.calls, 2);
+    expect(find.text('Cafe Nizami'), findsOneWidget);
+  });
+
+  test('membership parsing reads the nested restaurant and labels roles', () {
+    final restaurant = StaffRestaurant.fromJson({
+      'role': 'kitchen',
+      'is_active': true,
+      'restaurants': {
+        'name': 'Cafe Nizami',
+        'slug': 'cafe-nizami',
+        'publication_status': 'draft',
+      },
+    });
+
+    expect(restaurant, isNotNull);
+    expect(restaurant!.name, 'Cafe Nizami');
+    expect(restaurant.roleLabel, 'Kitchen');
+    expect(restaurant.publicationLabel, 'Not published yet');
+
+    final removed = StaffRestaurant.fromJson({
+      'role': 'server',
+      'is_active': false,
+      'restaurants': {
+        'name': 'Old Place',
+        'slug': 'old-place',
+        'publication_status': 'suspended',
+      },
+    });
+    expect(removed!.isActive, isFalse);
+    expect(removed.publicationLabel, 'Suspended');
   });
 }

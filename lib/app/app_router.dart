@@ -6,6 +6,7 @@ import '../features/customer/presentation/customer_entry_page.dart';
 import '../features/discovery/data/restaurant_directory_repository.dart';
 import '../features/menu/data/menu_repository.dart';
 import '../features/menu/presentation/restaurant_menu_page.dart';
+import '../features/staff/data/staff_restaurant_repository.dart';
 import '../features/staff/presentation/staff_access_page.dart';
 
 abstract final class AppRoutes {
@@ -26,12 +27,14 @@ class AppRouter {
     this.menuRepository,
     this.directoryRepository,
     this.authController,
+    this.staffRestaurantRepository,
   });
 
   final AppConfig config;
   final MenuRepository? menuRepository;
   final RestaurantDirectoryRepository? directoryRepository;
   final AuthController? authController;
+  final StaffRestaurantRepository? staffRestaurantRepository;
 
   /// One route for the whole deep link.
   ///
@@ -53,7 +56,11 @@ class AppRouter {
     }
     if (uri.path == AppRoutes.owner) {
       return _page(
-        StaffAccessPage(area: StaffArea.owner, authController: authController),
+        StaffAccessPage(
+          area: StaffArea.owner,
+          authController: authController,
+          restaurantRepository: staffRestaurantRepository,
+        ),
         settings,
       );
     }
@@ -62,6 +69,7 @@ class AppRouter {
         StaffAccessPage(
           area: StaffArea.kitchen,
           authController: authController,
+          restaurantRepository: staffRestaurantRepository,
         ),
         settings,
       );

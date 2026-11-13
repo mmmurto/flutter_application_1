@@ -20,6 +20,9 @@ development-only previews (see `AGENTS.md`).
   restore on reload, sign-out clears the session, and a rejected sign-in shows the provider
   message. There is no public sign-up: accounts are created by the platform or restaurant
   owner. With Supabase unconfigured, both routes stay behind the fail-closed boundary.
+- After sign-in, staff see the restaurants they belong to with their role and publication
+  state, read with their own JWT. An owner sees only their own membership rows, not their
+  colleagues', even though RLS would allow a manager to read the staff list.
 - One Flutter project for web, Android, iOS, Windows, macOS, and Linux, split into
   `app/`, `core/`, and `features/` layers with a router rather than widget-embedded navigation.
 - Public routes: `/` (discovery), `/r/<restaurantSlug>` (public menu),
@@ -89,7 +92,7 @@ supabase/
   migrations/                   versioned schema and security migrations
   seed.sql                      intentionally empty; no production-like seed data
   tests/                        pgTAP security suite (22 assertions)
-test/                           Flutter widget and unit tests (25)
+test/                           Flutter widget and unit tests (29)
 docs/                           product, architecture, security, and handoff docs
 config/dev.example.json         template for local Supabase values
 .github/workflows/              Flutter CI and Database CI
@@ -202,12 +205,28 @@ The app has no public sign-up. Locally, create a confirmed user in Supabase Stud
 1. Open `http://127.0.0.1:54323` (Studio is enabled in `supabase/config.toml`).
 2. Go to **Authentication → Users → Add user**, enter an email and password, and enable
    **Auto Confirm User**.
-3. Open the `/owner` or `/kitchen` URL printed by `flutter run` and sign in with those
-   credentials.
+3. Give the account restaurant access. In **SQL Editor → New query**, run the following with
+   your user's email, so the signed-in page shows a restaurant:
+
+   ```sql
+   -- Local development fixture only. Never add rows like this to a migration or seed.
+   insert into public.restaurants (name, slug, publication_status)
+   values ('Local Test Restaurant', 'local-test-restaurant', 'published');
+
+   insert into public.restaurant_memberships (restaurant_id, profile_id, role)
+   select r.id, u.id, 'owner'
+   from public.restaurants r
+   join auth.users u on u.email = 'you@example.test'
+   where r.slug = 'local-test-restaurant';
+   ```
+
+4. Open the `/owner` or `/kitchen` URL printed by `flutter run` and sign in with those
+   credentials. The page lists the restaurant and your role.
 
 New accounts start as `customer` profiles and can read nothing staff-only; restaurant access
-requires a membership row, which only a reviewed server-side process will create. Local users
-are wiped by `npm run db reset`.
+requires a membership row. Sign-in is verified locally against Supabase Auth, and the
+membership read runs with the user's own JWT, so Postgres returns only their rows. Local users
+and fixtures are wiped by `npm run db reset`.
 
 On a hosted project, decide deliberately whether public email sign-up stays enabled. It only
 creates customer accounts today, but the pilot does not need public registration.
@@ -220,7 +239,7 @@ Run these before opening a pull request. They are the same checks CI runs.
 | --- | --- |
 | `dart format --output=none --set-exit-if-changed lib test` | `Formatted N files (0 changed)` |
 | `flutter analyze` | `No issues found!` |
-| `flutter test` | `+25: All tests passed!` |
+| `flutter test` | `+29: All tests passed!` |
 | `npm run db:test` | `Files=1, Tests=22` and `Result: PASS` |
 | `git diff --check` | No output |
 
